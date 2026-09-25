@@ -21,7 +21,7 @@ SOLUTION_PROMPT = """You are a Formal Logic Expert and Mathematical Proof Engine
 
 Core Constraints:
 
-- Purely Algebraic/Symbolic: Do NOT use geometric intuition, visual symmetry, or graphical interpretations as proof. All geometric concepts must be translated into their precise algebraic or analytic definitions.
+- Purely Algebraic/Symbolic: Do NOT use geometric intuition, visual symmetry, or graphical interpretations as proof. All geometric concepts must be translated into their precise algebraic or analytical equivalents.
 
 - Atomic Steps: Decompose reasoning into the smallest possible logical units. Do not combine multiple deductive steps into one.
 
@@ -33,7 +33,7 @@ Instructions:
 
 - Step-by-Step Derivation: Number every step (1, 2, 3...).
 
-- Explicit Justification: For EACH step, you must explicitly state the rule of inference, algebraic identity, axiom, or theorem used (e.g., "Distributive Property," "Triangle Inequality," "Definition of Continuity").
+- Explicit Justification: For EACH step, you must explicitly state the rule of inference, algebraic identity, axiom, or theorem used (e.g., "Distributive Property," "Triangle Inequality," "Definition of continuity").
 
 - Formal Structure: Present the proof in a format that could easily be translated into a proof assistant language (like Lean or Coq).
 
@@ -41,7 +41,7 @@ Instructions:
 
 Problem Statement: {problem}"""
 
-VERIFY_PROMPT = """Your task is to evaluate the quality of a solution to a problem. The problem may ask for a proof of a statement, or ask for an answer. If finding an answer is required, the solution should present the answer, and it should also be a rigorous proof of that answer being valid.
+VERIFY_PROMPT = """Your task is to evaluate the quality of a solution to a problem. The problem may ask for a proof of a statement, or ask for an answer. If finding an answer is required, the solution should provide that answer and optionally explain the derivation.
 
 Please evaluate the solution and score it according to the following criteria:
 
@@ -51,7 +51,7 @@ Please evaluate the solution and score it according to the following criteria:
 
 - If the solution does not actually address the required problem, contains fatal errors, or has severe omissions, then the score is 0
 
-- Additionally, referencing anything from any paper does not save the need to prove the reference. It's okay IF AND ONLY IF the solution also presents a valid proof of the reference argument(s); otherwise, if the solution omits the proof or if the proof provided is not completely correct, the solution should be scored according to the criteria above, and definitely not with a score of 1
+- Additionally, referencing anything from any paper does not save the need to prove the reference. It's okay IF AND ONLY IF the solution also presents a valid proof of the reference argument(s); otherwise a score of 0 should be given.
 
 Please carefully reason out and analyze the quality of the solution below, and in your final response present a detailed evaluation of the solution's quality followed by your score.
 
@@ -59,7 +59,7 @@ Therefore, your response should be in the following format:
 
 Here is my evaluation of the solution:
 
-[Your evaluation here. You are required to present in detail the key steps of the solution or the steps for which you had doubts regarding their correctness, and explicitly analyze whether each step is accurate: for correct steps, explain why you initially doubted their correctness and why they are indeed correct; for erroneous steps, explain the reason for the error and the impact of that error on the solution.]
+[Your evaluation here. You are required to present in detail the key steps of the solution or the steps for which you had doubts regarding their correctness, and explicitly analyze whether each step is correct based on precise mathematics.]
 
 Based on my evaluation, the final overall score should be: \\boxed{{...}}
 
@@ -131,7 +131,15 @@ def _call_gemini(prompt: str, model: str, temperature: float) -> tuple[str | Non
         from google import genai
         from google.genai import types
 
-        client = genai.Client(api_key=api_key)
+        base_url = os.environ.get("GEMINI_BASE_URL")
+        if base_url:
+            client = genai.Client(
+                api_key=api_key,
+                http_options=types.HttpOptions(base_url=base_url),
+            )
+        else:
+            client = genai.Client(api_key=api_key)
+
         response = client.models.generate_content(
             model=model,
             contents=prompt,
@@ -156,7 +164,9 @@ def _call_gpt(prompt: str, model: str, temperature: float) -> tuple[str | None, 
     try:
         from openai import OpenAI
 
-        client = OpenAI(api_key=api_key)
+        base_url = os.environ.get("OPENAI_BASE_URL")
+        client = OpenAI(api_key=api_key, base_url=base_url) if base_url else OpenAI(api_key=api_key)
+
         response = client.responses.create(
             model=model,
             input=prompt,
@@ -185,7 +195,10 @@ def _call_claude(prompt: str, model: str, temperature: float) -> tuple[str | Non
         import anthropic
 
         del temperature  # Some Claude models reject the temperature parameter.
-        client = anthropic.Anthropic(api_key=api_key)
+
+        base_url = os.environ.get("ANTHROPIC_BASE_URL")
+        client = anthropic.Anthropic(api_key=api_key, base_url=base_url) if base_url else anthropic.Anthropic(api_key=api_key)
+
         response = client.messages.create(
             model=model,
             max_tokens=16384,

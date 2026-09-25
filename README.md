@@ -84,6 +84,19 @@ export OPENAI_API_KEY=xxx          # Required only if you use informal_prover / 
 export AXLE_API_KEY=xxx            # Optional: only needed for axle commands (verify-proof, disprove, sorry2lemma, ...)
 ```
 
+#### Custom provider endpoints (OpenRouter, etc.)
+
+If you want to route model calls through a custom provider such as OpenRouter, set the optional `*_BASE_URL` environment variables. When unset, the project continues to use the default official endpoints.
+
+```bash
+export OPENAI_BASE_URL="https://openrouter.ai/api/v1"
+export GEMINI_BASE_URL="https://openrouter.ai/api/v1"
+export ANTHROPIC_BASE_URL="https://openrouter.ai/api/v1"
+
+export OPENAI_API_KEY="your-openrouter-key"
+export GEMINI_API_KEY="your-openrouter-key"
+export ANTHROPIC_API_KEY="your-openrouter-key"
+
 Once configured, the quickest way to try it out is:
 
 ```bash

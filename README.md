@@ -96,6 +96,7 @@ export ANTHROPIC_BASE_URL="https://openrouter.ai/api/v1"
 export OPENAI_API_KEY="your-openrouter-key"
 export GEMINI_API_KEY="your-openrouter-key"
 export ANTHROPIC_API_KEY="your-openrouter-key"
+```
 
 Once configured, the quickest way to try it out is:
 
